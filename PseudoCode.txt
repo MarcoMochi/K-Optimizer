@@ -1,0 +1,68 @@
+
+K-OPTIMIZE(k, head set H, tail set T, best cost c):
+    Return the lowest cost of any anonymization within the subtree rooted at H.
+    Otherwise return c
+    T <- PRUNE-USELESS-VALUES(H, T)
+    c <- MIN(c, COMPUTE-COST(H))
+    T <- PRUNE(H, T, c)
+    T <- REORDER-TAIL(H, T)
+    while T is non-empty do
+        v <- the first value in the ordered set T
+        H new <- H + {v}
+        T <- T - {v}
+        c <- K-OPTIMIZE(k, H new, T, c)
+        T <- PRUNE(H, T, c)
+    return c
+
+PRUNE-USELESS-VALUES(H, T)
+    Return the tails without all the values that induce equivalence classes with size lower than k
+    for each v in T do:
+        H <- H + v
+        if size(equivalence class(H)) < k:
+            T <- T - v
+    return T
+
+COMPUTE-COST(H):
+    Return the value of the cost
+    Cdm:
+        Cdm <- 0
+        for each E in equivalence class(H):
+            if size(E) >= K:
+                Cdm <- Cdm + size(E)^2
+             else:
+                Cdm <- Cdm + size(E)*size(D)
+        return Cdm
+    Ccm:
+        ** TO-DO **
+
+PRUNE(H, T, c):
+    Return a new Tail set by removing values from T that cannot lead to anonymizatuibs with cost lower than c
+    if COMPUTE-LOWER-BOUND(k, H, H + T) >= c
+        return {}
+    T new <- T
+    for each v in T do:
+        H new <- H + v
+        if PRUNE(H new, T new - v, c) = {}:
+            T new <- T new - v
+    if T new != T:
+        return PRUNE(H, T new, c)
+    else:
+        return T new
+
+REORDER-TAIL(H, T):
+    Return a tail ordered by decreising value of splitted equivalence classes
+    for each v in T do:
+        modified(equivalence classes(H + v)
+    order by modified(equivalence classes(H + v) and by sum of power of size(E)
+    return T
+
+COMPUTE-LOWER-BOUND(k, H, H+T):
+    Return the lower bound cost of based on the Head and the Allset.
+    Lbc -> 0
+    for each tuple in D:
+        if tuple suppressed by H:
+            Lbc -> Lbc + size(D)
+        else
+            Lbc -> max(size(E,A), k)
+
+

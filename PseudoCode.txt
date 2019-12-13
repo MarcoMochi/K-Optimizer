@@ -36,7 +36,7 @@ COMPUTE-COST(H):
         ** TO-DO **
 
 PRUNE(H, T, c):
-    Return a new Tail set by removing values from T that cannot lead to anonymizatuibs with cost lower than c
+    Return a new Tail set by removing values from T that cannot lead to anonymization with cost lower than c
     if COMPUTE-LOWER-BOUND(k, H, H + T) >= c
         return {}
     T new <- T

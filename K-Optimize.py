@@ -25,28 +25,38 @@ def EquivalenceClass(H, k):
             for k in list(equivalenceClassDict.keys()):
                 key1 = key2 = ""
                 valueSplit = [int(n) for n in k.split(".")]
-                minSplit = MaxOfSmaller(valueSplit,v)
+                if v < valueSplit[0]:
+                    continue
+                else:
+                    minSplit = MaxOfSmaller(valueSplit,v)
                 maxSplit = valueSplit[valueSplit.index(minSplit)+1]
-                if maxSplit == MinOfGreater(stopValue, v):
-                    maxSplit = maxSplit - 1
-                if minSplit >= MaxOfSmaller(stopValue, v) and maxSplit < MinOfGreater(stopValue, v):
-                    del equivalenceClassDict[k]
-                    for m in valueSplit:
-                        if m == minSplit:
-                            key1 = key1 + str(m) + "."
-                            key1 = key1 + str(v) + "."
-                            key2 = key2 + str(v) + "."
-                        elif m == maxSplit-1:
-                            key2 = key2 + str(m) + "."
-                        else:
-                            key1 = key1 + str(m) + "."
-                            key2 = key2 + str(m) + "."
-                    key1 = key1[:-1]
-                    key2 = key2[:-1]
-        if key1 != "":
-            equivalenceClassDict[key1] = ""
-            equivalenceClassDict[key2] = ""
+                if minSplit >= MaxOfSmaller(stopValue, v):
+                    secondStep = valueSplit[valueSplit.index(minSplit)-1]
+                    if (secondStep < MaxOfSmaller(stopValue,v) and maxSplit <= MinOfGreater(stopValue, v)) or minSplit == stopValue[0]:
+                        del equivalenceClassDict[k]
+                        for m in valueSplit:
+                            if m == minSplit:
+                                key1 = key1 + str(m) + "."
+                                key1 = key1 + str(v) + "."
+                                key2 = key2 + str(v) + "."
+                            elif m == maxSplit:
+                                key2 = key2 + str(m) + "."
+                                if m >= MinOfGreater(stopValue, v):
+                                    key1 = key1 + str(m) + "."
+                            else:
+                                key1 = key1 + str(m) + "."
+                                key2 = key2 + str(m) + "."
+                        key1 = key1[:-1]
+                        key2 = key2[:-1]
+                        if key1 != "":
+                            equivalenceClassDict[key1] = ""
+                            equivalenceClassDict[key2] = ""
 
 
 EquivalenceClass([2,12,15,22], 12)
+EquivalenceClass([2,12,15,18,22], 12)
+EquivalenceClass([2,12,14,15,18,22], 12)
+EquivalenceClass([2,7,12,14,15,18,22], 12)
+EquivalenceClass([2,7,12,13,14,15,18,22], 12)
+EquivalenceClass([2,7,12,13,14,15,18,22], 12)
 print(equivalenceClassDict)

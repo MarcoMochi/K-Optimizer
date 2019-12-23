@@ -3,7 +3,7 @@ import pandas as pd
 dataset = pd.read_csv("./Dataset/BMI.csv")
 rangeDb = pd.read_csv("./Dataset/rangeValue.csv")
 k = 5
-tupleList = [x for x in range(0,401)]
+tupleList = [x for x in range(0,500)]
 rangeDict = {}
 equivalenceClassDict = {}
 tempEquivalenceClassDict = {}
@@ -60,6 +60,8 @@ def EquivalenceClass(H, save = True):
                             columnIndex = stopValue.index(MinOfGreater(stopValue,v))
                             if maxSplit == 0:
                                 maxSplit = 28
+                            elif maxSplit > MinOfGreater(stopValue, v):
+                                maxSplit = MinOfGreater(stopValue, v)
                             equivalenceClassDict[key1] = CreateRange(columnIndex, minSplit, v, tupleList)
                             equivalenceClassDict[key2] = CreateRange(columnIndex, v,maxSplit, tupleList)
                         elif not save:
@@ -70,12 +72,16 @@ def CreateRange(columnIndex, start, end, tupleList):
     tempList = []
     startRange = int(rangeDb.iloc[start-1, 1])
     if end in stopValue:
-        end -= 1
-    endRange = int(rangeDb.iloc[end-1, 1])
-    for index in tupleList:
-        checkValue = int(dataset.iloc[index, columnIndex])
-        if checkValue >= startRange and checkValue < endRange:
-            tempList.append(index)
+        for index in tupleList:
+            checkValue = int(dataset.iloc[index, columnIndex])
+            if checkValue >= startRange:
+                tempList.append(index)
+    else:
+        endRange = int(rangeDb.iloc[end-1, 1])
+        for index in tupleList:
+            checkValue = int(dataset.iloc[index, columnIndex])
+            if checkValue >= startRange and checkValue < endRange:
+                tempList.append(index)
     return tempList
 
 def PruneUselessValue(H, T):
@@ -88,5 +94,10 @@ def PruneUselessValue(H, T):
 
 EquivalenceClass([2,12,15,22])
 EquivalenceClass([2,12,15,18,22])
+EquivalenceClass([2,12,15,18,22,25])
+EquivalenceClass([2,12,14,15,18,22,25,27])
+EquivalenceClass([2,5,12,15,22])
 
 print(equivalenceClassDict)
+for item in equivalenceClassDict:
+    print(len(equivalenceClassDict[item]))

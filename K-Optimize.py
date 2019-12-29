@@ -1,8 +1,11 @@
+import math
+
 import pandas as pd
 
 dataset = pd.read_csv("./Dataset/BMI.csv")
 rangeDb = pd.read_csv("./Dataset/rangeValue.csv")
-k = 5
+k = 20
+iteration = 0
 tupleList = [x for x in range(0,500)]
 rangeDict = {}
 equivalenceClassDict = {}
@@ -12,6 +15,7 @@ H = [2, 12, 22]
 stopValue = [2, 12, 22, 28]
 T = [i for i in rangeDict.keys() if i not in H]
 T.remove(0)
+T.remove(1)
 equivalenceClassDict["2.12.22"] = tupleList
 
 def MaxOfSmaller(values, n):
@@ -40,7 +44,7 @@ def EquivalenceClass(H, save = True):
                 if minSplit >= MaxOfSmaller(stopValue, v):
                     secondStep = valueSplit[valueSplit.index(minSplit)-1]
                     if (secondStep < MaxOfSmaller(stopValue,v) and maxSplit <= MinOfGreater(stopValue, v)) or minSplit == stopValue[0] or secondStep > minSplit:
-                        tupleList = equivalenceClassDict[k]
+                        tupleList = tempEquivalenceClassDict[k]
                         if save:
                             del equivalenceClassDict[k]
                         else:
@@ -95,7 +99,6 @@ def PruneUselessValue(H, T):
          tempList = H + [v]
          temp = EquivalenceClass(tempList, save=False)
          sizes = [len(v) for v in temp.values()]
-         print(sizes)
          if all(size < k for size in sizes):
              print("Rimuoviamo " + str(v))
              T.remove(v)
@@ -124,6 +127,7 @@ def ReorderTail(H, T):
     listClassModified.sort(key=lambda tup:  tup[2], reverse=False)
     listClassModified.sort(key=lambda tup:  tup[1], reverse=True)
     listClassModified = list(map(lambda x: x[0], listClassModified))
+    return listClassModified
 
 def ComputeLBCost(H, T):
     temp = EquivalenceClass(H + T, save=False)
@@ -133,18 +137,50 @@ def ComputeLBCost(H, T):
         for item in equivalenceClassDict.values():
             if row in item:
                 sizeClass = len(item)
+                break
         if sizeClass < k:
             lbCost += len(tupleList)
         else:
             for item in temp.values():
                 if row in item:
                     sizeClass = len(item)
+                    break
             lbCost += max(sizeClass, k)
+    return lbCost
 
-EquivalenceClass([2,12,18,22])
-EquivalenceClass([2,12,15,18,22])
-EquivalenceClass([2,12,15,18,22,4])
-EquivalenceClass([2,12,15,18,22,4,5])
-#PruneUselessValue(H,T)
+def Prune(H, T, c):
+    global iteration
+    print("Iterazione numero :" + str(iteration))
+    iteration += 1
 
-ComputeLBCost([2,12,15,18,22], [4,5,19])
+    if ComputeLBCost(H,T) >= c:
+        return c
+    for v in T:
+        newH = H + [v]
+        Tnew = T.copy()
+        Tnew.remove(v)
+        if ComputeLBCost(H,T) > c:
+            T.remove(v)
+    return T
+
+def K_Optimize(H, T, c):
+    T = PruneUselessValue(H, T)
+    c = min(c, ComputeCost())
+    T = Prune(H, T, c)
+    if (type(T) is not list):
+        print("best anonymization found!")
+        print(str(H) + "with cost:" + str(c))
+        exit()
+    T = ReorderTail(H, T)
+    while T:
+        v = T[0]
+        newH = H + [v]
+        T.remove(v)
+        EquivalenceClass(newH, T)
+        c = K_Optimize(newH, T, c)
+        T = Prune(H, T, c)
+    print("best anonymization found!")
+    print(H + "with cost:" + str(c))
+
+
+K_Optimize(H, T, math.inf)

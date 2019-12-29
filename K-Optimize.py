@@ -24,8 +24,8 @@ def EquivalenceClass(H, save = True):
     tempEquivalenceClassDict = equivalenceClassDict.copy()
     for v in H:
         key1 = key2 = ""
-        if not any(str(v) in i.split(".") for i in equivalenceClassDict.keys()):
-            for k in list(equivalenceClassDict.keys()):
+        if not any(str(v) in i.split(".") for i in tempEquivalenceClassDict.keys()):
+            for k in list(tempEquivalenceClassDict.keys()):
                 key1 = key2 = ""
                 valueSplit = [int(n) for n in k.split(".")]
                 valueSplit.sort()
@@ -39,7 +39,7 @@ def EquivalenceClass(H, save = True):
                     maxSplit = 0
                 if minSplit >= MaxOfSmaller(stopValue, v):
                     secondStep = valueSplit[valueSplit.index(minSplit)-1]
-                    if (secondStep < MaxOfSmaller(stopValue,v) and maxSplit <= MinOfGreater(stopValue, v)) or minSplit == stopValue[0]:
+                    if (secondStep < MaxOfSmaller(stopValue,v) and maxSplit <= MinOfGreater(stopValue, v)) or minSplit == stopValue[0] or secondStep > minSplit:
                         tupleList = equivalenceClassDict[k]
                         if save:
                             del equivalenceClassDict[k]
@@ -110,14 +110,41 @@ def ComputeCost():
             cost+= len(item) * len(tupleList)
     return cost
 
-ComputeCost()
-EquivalenceClass([2,12,15,22])
-ComputeCost()
-EquivalenceClass([2,5,12,15,22])
-ComputeCost()
-# EquivalenceClass([2,12,15,18,22])
-# EquivalenceClass([2,12,15,18,22,25])
-# EquivalenceClass([2,12,14,15,18,22,25,27])
-# EquivalenceClass([2,5,12,15,22])
+def ReorderTail(H, T):
+    listClassModified = []
+    for v in T:
+        sumOfPower = 0
+        classInduced = 0
+        tempList = H + [v]
+        temp = EquivalenceClass(tempList, save=False)
+        for item in temp.values():
+            classInduced += 1
+            sumOfPower += len(item)**2
+        listClassModified.append((v, classInduced - len(equivalenceClassDict), sumOfPower))
+    listClassModified.sort(key=lambda tup:  tup[2], reverse=False)
+    listClassModified.sort(key=lambda tup:  tup[1], reverse=True)
+    listClassModified = list(map(lambda x: x[0], listClassModified))
+
+def ComputeLBCost(H, T):
+    temp = EquivalenceClass(H + T, save=False)
+    lbCost = 0
+    sizeClass = 0
+    for row in tupleList:
+        for item in equivalenceClassDict.values():
+            if row in item:
+                sizeClass = len(item)
+        if sizeClass < k:
+            lbCost += len(tupleList)
+        else:
+            for item in temp.values():
+                if row in item:
+                    sizeClass = len(item)
+            lbCost += max(sizeClass, k)
+
+EquivalenceClass([2,12,18,22])
+EquivalenceClass([2,12,15,18,22])
+EquivalenceClass([2,12,15,18,22,4])
+EquivalenceClass([2,12,15,18,22,4,5])
 #PruneUselessValue(H,T)
 
+ComputeLBCost([2,12,15,18,22], [4,5,19])

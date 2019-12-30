@@ -4,11 +4,10 @@ import pandas as pd
 
 dataset = pd.read_csv("./Dataset/BMI.csv")
 rangeDb = pd.read_csv("./Dataset/rangeValue.csv")
-k = 20
+k = 5
 iteration = 0
 tupleList = [x for x in range(0,500)]
 rangeDict = {}
-equivalenceClassDict = {}
 for row in rangeDb.itertuples(index=True, name='Pandas'):
     rangeDict[getattr(row, "Index")] = getattr(row, "Value")
 H = [2, 12, 22]
@@ -16,7 +15,8 @@ stopValue = [2, 12, 22, 28]
 T = [i for i in rangeDict.keys() if i not in H]
 T.remove(0)
 T.remove(1)
-equivalenceClassDict["2.12.22"] = tupleList
+visited = ([])
+
 
 def MaxOfSmaller(values, n):
     return max(m for m in values if m < n)
@@ -24,7 +24,7 @@ def MaxOfSmaller(values, n):
 def MinOfGreater(values, n):
     return min(m for m in values if m > n)
 
-def EquivalenceClass(H, save = True):
+def EquivalenceClass(H, equivalenceClassDict, save = True):
     tempEquivalenceClassDict = equivalenceClassDict.copy()
     for v in H:
         key1 = key2 = ""
@@ -77,6 +77,8 @@ def EquivalenceClass(H, save = True):
                                 tempEquivalenceClassDict[key2] = CreateRange(columnIndex, v,maxSplit, tupleList)
     if not save:
         return tempEquivalenceClassDict
+    if save:
+        return equivalenceClassDict
 
 def CreateRange(columnIndex, start, end, tupleList):
     tempList = []
@@ -94,17 +96,17 @@ def CreateRange(columnIndex, start, end, tupleList):
                 tempList.append(index)
     return tempList
 
-def PruneUselessValue(H, T):
+def PruneUselessValue(H, T, eCD):
      for v in T:
          tempList = H + [v]
-         temp = EquivalenceClass(tempList, save=False)
+         temp = EquivalenceClass(tempList, eCD, save=False)
          sizes = [len(v) for v in temp.values()]
          if all(size < k for size in sizes):
              print("Rimuoviamo " + str(v))
              T.remove(v)
      return T
 
-def ComputeCost():
+def ComputeCost(equivalenceClassDict):
     cost = 0
     for item in equivalenceClassDict.values():
         if len(item) >= k:
@@ -113,74 +115,80 @@ def ComputeCost():
             cost+= len(item) * len(tupleList)
     return cost
 
-def ReorderTail(H, T):
+def ReorderTail(H, T, eCD):
     listClassModified = []
     for v in T:
         sumOfPower = 0
         classInduced = 0
         tempList = H + [v]
-        temp = EquivalenceClass(tempList, save=False)
+        temp = EquivalenceClass(tempList, eCD, save=False)
         for item in temp.values():
             classInduced += 1
             sumOfPower += len(item)**2
-        listClassModified.append((v, classInduced - len(equivalenceClassDict), sumOfPower))
+        listClassModified.append((v, classInduced - len(eCD), sumOfPower))
     listClassModified.sort(key=lambda tup:  tup[2], reverse=False)
     listClassModified.sort(key=lambda tup:  tup[1], reverse=True)
     listClassModified = list(map(lambda x: x[0], listClassModified))
     return listClassModified
 
-def ComputeLBCost(H, T):
-    temp = EquivalenceClass(H + T, save=False)
+def ComputeLBCost(H, T, eCD):
+    temp = EquivalenceClass(H + T, eCD, save=False)
+    tempH = EquivalenceClass(H, eCD, save=False)
     lbCost = 0
     sizeClass = 0
     for row in tupleList:
-        for item in equivalenceClassDict.values():
+        for item in tempH.values():
             if row in item:
                 sizeClass = len(item)
                 break
         if sizeClass < k:
             lbCost += len(tupleList)
         else:
-            for item in temp.values():
-                if row in item:
-                    sizeClass = len(item)
+            for item1 in temp.values():
+                if row in item1:
+                    sizeClass = len(item1)
                     break
             lbCost += max(sizeClass, k)
     return lbCost
 
-def Prune(H, T, c):
+def Prune(H, T, c, eCD):
     global iteration
     print("Iterazione numero :" + str(iteration))
     iteration += 1
 
-    if ComputeLBCost(H,T) >= c:
-        return c
+    if ComputeLBCost(H,T, eCD) >= c:
+        return []
+    Tnew = T.copy()
     for v in T:
         newH = H + [v]
         Tnew = T.copy()
         Tnew.remove(v)
-        if ComputeLBCost(H,T) > c:
+        if ComputeLBCost(newH,Tnew, eCD) > c:
             T.remove(v)
     return T
 
-def K_Optimize(H, T, c):
-    T = PruneUselessValue(H, T)
-    c = min(c, ComputeCost())
-    T = Prune(H, T, c)
-    if (type(T) is not list):
-        print("best anonymization found!")
-        print(str(H) + "with cost:" + str(c))
-        exit()
-    T = ReorderTail(H, T)
+def K_Optimize(H, T, c, eCD):
+    T = PruneUselessValue(H, T, eCD)
+    c = min(c, ComputeCost(eCD))
+    T = Prune(H, T, c, eCD)
+    T = ReorderTail(H, T, eCD)
     while T:
         v = T[0]
         newH = H + [v]
+        newH.sort()
+        if newH not in visited:
+            visited.append(newH)
+        else:
+            print(str(newH) + "Giá visitato")
+            continue
         T.remove(v)
-        EquivalenceClass(newH, T)
-        c = K_Optimize(newH, T, c)
-        T = Prune(H, T, c)
+        eCD = EquivalenceClass(newH, eCD)
+        c = K_Optimize(newH, T, c, eCD.copy())
+        T = Prune(H, T, c, eCD)
     print("best anonymization found!")
-    print(H + "with cost:" + str(c))
+    print(str(H) + "with cost:" + str(c))
+    return c
 
-
-K_Optimize(H, T, math.inf)
+equivalenceClassDict = {}
+equivalenceClassDict["2.12.22"] = tupleList
+K_Optimize(H, T, math.inf, equivalenceClassDict.copy())

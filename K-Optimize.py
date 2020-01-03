@@ -4,7 +4,7 @@ import pandas as pd
 
 dataset = pd.read_csv("./Dataset/BMI.csv")
 rangeDb = pd.read_csv("./Dataset/rangeValue.csv")
-k = 5
+k = 100
 iteration = 0
 tupleList = [x for x in range(0,500)]
 rangeDict = {}
@@ -16,6 +16,8 @@ T = [i for i in rangeDict.keys() if i not in H]
 T.remove(0)
 T.remove(1)
 visited = ([])
+bestCost = []
+savedClass = {}
 
 
 def MaxOfSmaller(values, n):
@@ -43,7 +45,7 @@ def EquivalenceClass(H, equivalenceClassDict, save = True):
                     maxSplit = 0
                 if minSplit >= MaxOfSmaller(stopValue, v):
                     secondStep = valueSplit[valueSplit.index(minSplit)-1]
-                    if (secondStep < MaxOfSmaller(stopValue,v) and maxSplit <= MinOfGreater(stopValue, v)) or minSplit == stopValue[0] or secondStep > minSplit:
+                    if secondStep < MaxOfSmaller(stopValue,v) or secondStep > minSplit:
                         tupleList = tempEquivalenceClassDict[k]
                         if save:
                             del equivalenceClassDict[k]
@@ -121,7 +123,10 @@ def ReorderTail(H, T, eCD):
         sumOfPower = 0
         classInduced = 0
         tempList = H + [v]
-        temp = EquivalenceClass(tempList, eCD, save=False)
+        try:
+            temp = savedClass[str(tempList)]
+        except:
+            temp = EquivalenceClass(tempList, eCD, save=False)
         for item in temp.values():
             classInduced += 1
             sumOfPower += len(item)**2
@@ -132,8 +137,16 @@ def ReorderTail(H, T, eCD):
     return listClassModified
 
 def ComputeLBCost(H, T, eCD):
-    temp = EquivalenceClass(H + T, eCD, save=False)
-    tempH = EquivalenceClass(H, eCD, save=False)
+    try:
+        temp = savedClass[str(H+T)]
+    except:
+        temp = EquivalenceClass(H + T, eCD, save=False)
+        savedClass[str(H+T)] = temp
+    try:
+        tempH = savedClass[H]
+    except:
+        tempH = EquivalenceClass(H, eCD, save=False)
+        savedClass[str(H)] = tempH
     lbCost = 0
     sizeClass = 0
     for row in tupleList:
@@ -152,22 +165,23 @@ def ComputeLBCost(H, T, eCD):
     return lbCost
 
 def Prune(H, T, c, eCD):
-    global iteration
-    print("Iterazione numero :" + str(iteration))
-    iteration += 1
-
-    if ComputeLBCost(H,T, eCD) >= c:
+   if ComputeLBCost(H,T, eCD) >= c:
         return []
-    Tnew = T.copy()
-    for v in T:
+   Tnew = T.copy()
+   for v in T:
         newH = H + [v]
         Tnew = T.copy()
         Tnew.remove(v)
-        if ComputeLBCost(newH,Tnew, eCD) > c:
+        if ComputeLBCost(newH,Tnew, eCD) >= c:
             T.remove(v)
-    return T
+            if ComputeLBCost(H, T, eCD) >= c:
+                return []
+   return T
 
 def K_Optimize(H, T, c, eCD):
+    global iteration
+    print("Iterazione numero :" + str(iteration))
+    iteration += 1
     T = PruneUselessValue(H, T, eCD)
     c = min(c, ComputeCost(eCD))
     T = Prune(H, T, c, eCD)
@@ -176,19 +190,27 @@ def K_Optimize(H, T, c, eCD):
         v = T[0]
         newH = H + [v]
         newH.sort()
-        if newH not in visited:
-            visited.append(newH)
+        if str(newH) not in visited:
+            visited.append(str(newH))
         else:
             print(str(newH) + "Giá visitato")
             continue
         T.remove(v)
-        eCD = EquivalenceClass(newH, eCD)
+        try:
+            eCD = savedClass[str(newH)]
+        except:
+            eCD = EquivalenceClass(newH, eCD)
+            savedClass[str(newH)] = eCD
         c = K_Optimize(newH, T, c, eCD.copy())
         T = Prune(H, T, c, eCD)
-    print("best anonymization found!")
-    print(str(H) + "with cost:" + str(c))
+    if c < bestCost[0][1]:
+        bestCost.clear()
+        bestCost.append((H, c))
+        print("best anonymization found!")
+        print(str(H) + "with cost:" + str(c))
     return c
 
 equivalenceClassDict = {}
 equivalenceClassDict["2.12.22"] = tupleList
+bestCost.append((H, math.inf))
 K_Optimize(H, T, math.inf, equivalenceClassDict.copy())

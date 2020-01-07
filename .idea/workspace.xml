@@ -42,7 +42,7 @@
     </option>
   </component>
   <component name="RunManager" selected="Python.K-Optimize">
-    <configuration name="K-Optimize" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="K-Optimize" type="PythonConfigurationType" factoryName="Python">
       <module name="K-Optimizer" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -86,7 +86,6 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.K-Optimize" />
         <item itemvalue="Python.codecs" />
       </list>
     </recent_temporary>
@@ -116,13 +115,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/K-Optimize.py</url>
-          <line>211</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">

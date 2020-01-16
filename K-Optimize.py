@@ -2,19 +2,23 @@ import math
 
 import pandas as pd
 
+# loading original db
 dataset = pd.read_csv("./Dataset/BMI.csv")
 rangeDb = pd.read_csv("./Dataset/rangeValue.csv")
+# set a default k
 k = 5
+# set a default sup
 sup = math.inf
 iteration = 0
-tupleList = [x for x in range(0, 500)]
+# creates index of the database
+tupleList = [x for x in range(0, len(dataset.index))]
 rangeDict = {}
 for row in rangeDb.itertuples(index=True, name='Pandas'):
     rangeDict[getattr(row, "Index")] = getattr(row, "Value")
 H = [0, 2, 12, 22]
 stopValue = [0, 2, 12, 22, 28]
 T = [i for i in rangeDict.keys() if i not in H]
-T.remove(28)
+T.remove(stopValue[-1])
 bestCost = []
 savedClass = {}
 
